@@ -8,31 +8,58 @@ import { FaEdit } from "react-icons/fa";
 import { MdDelete } from "react-icons/md";
 import Swal from "sweetalert2";
 import Spinner from "./Spinner";
+import TaskColumn from "./TaskColumn";
 
-const TaskBoard = () => {
-  const [updateId, setUpdateId] = useState("");
-  const [modalTitle, setModalTitle] = useState("");
+const TodoAppp = () => {
+  const [updatedId, setUpdatedId] = useState("");
+  // const [modalTitle, setModalTitle] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [modalDescription, setModalDescription] = useState("");
+  // const [modalDescription, setModalDescription] = useState("");
   const [category, setCategory] = useState("To-Do");
 
-  const [onDrop, setOnDrop] = useState(null)
+  const [onDrop, setOnDrop] = useState(null);
 
   const { user } = useContext(AuthContext);
 
-  const { isPending, isError, data, error, refetch } = useQuery({
-    queryKey: ["tasks", user?.email],
+  // const { isPending, isError, data, error, refetch } = useQuery({
+  //   queryKey: ["tasks", user?.email],
+  //   queryFn: async () => {
+  //     const { data } = await axios.get(`http://localhost:5000/tasks`);
+  //     return data;
+  //   },
+  //   onSuccess: async (data) => {
+  //    await setTodoTasks(data.filter(task => task.category === 'To-Do'));
+  //     await setInProgressTasks(data.filter(task => task.category === 'In Progress'));
+  //    await setDoneTasks(data.filter(task => task.category === 'Done'));
+  //   }
+  // });
+
+  const {
+    data: tasks,
+    isPending,
+    refetch,
+  } = useQuery({
+    queryKey: ["tasks"],
     queryFn: async () => {
       const { data } = await axios.get(`http://localhost:5000/tasks`);
       return data;
     },
+    select: (data) => ({
+      todoTask: data.filter((task) => task.category === "To-Do"),
+      inProgressTask: data.filter((task) => task.category === "In Progress"),
+      doneTask: data.filter((task) => task.category === "Done"),
+    }),
   });
 
   if (isPending) {
     return <Spinner></Spinner>;
   }
   // console.log(data);
+
+  console.log(tasks?.todoTask);
+  console.log(tasks?.inProgressTask);
+  console.log(tasks?.doneTask);
 
   const handleSubmit = async () => {
     if (title.trim() === "" || title.length > 50 || description.length > 200) {
@@ -76,6 +103,8 @@ const TaskBoard = () => {
       confirmButtonText: "Yes, delete it!",
     }).then(async (result) => {
       if (result.isConfirmed) {
+      //  console.log(id);
+       
         try {
           await axios.delete(`http://localhost:5000/tasks/${id}`);
           Swal.fire({
@@ -91,55 +120,84 @@ const TaskBoard = () => {
     });
   };
 
-  // update
-  const handleUpdate = (id, title, description, category) => {
-    setUpdateId(id);
-    document.getElementById("my_modal_1").showModal();
+ 
+
+  // // update
+  // const handleUpdate = (id) => {
+  //   setUpdateId(id);
+  //   document.getElementById("my_modal_1").showModal();
+  // };
+
+  // const handleUpdateRequest = async () => {
+  //   const updatedInfo = { modalTitle, modalDescription };
+  //   console.log(updatedInfo, updateId);
+
+  //   try {
+  //     await axios.patch(`http://localhost:5000/tasks/${updateId}`, updatedInfo);
+  //     toast.success("Updated successfull");
+  //     refetch();
+  //     document.getElementById("my_modal_1").close();
+  //   } catch (error) {
+  //     toast.error(error.message);
+  //   }
+  // };
+
+  const handleDrag = (e, datum) => {
+    // console.log(datum);
+    setOnDrop(datum);
   };
 
-  const handleUpdateRequest = async () => {
-    const updatedInfo = { modalTitle, modalDescription };
-    console.log(updatedInfo, updateId);
+  const onDragOver = (e) => {
+    // console.log(e.target);
+    e.preventDefault();
+  };
+
+
+
+
+  const handleOnDrop = async (e) => {
+    const status = e.target.getAttribute("data-status");
+    console.log(e, status);
 
     try {
-      await axios.patch(`http://localhost:5000/tasks/${updateId}`, updatedInfo);
-      toast.success("Updated successfull");
+      await axios.patch(`http://localhost:5000/transfer/${onDrop._id}`, {
+        whereToDrop: status,
+      });
       refetch();
-      document.getElementById("my_modal_1").close();
+      toast.success(`on ${status}`);
     } catch (error) {
       toast.error(error.message);
     }
   };
 
-  const handleDrag = (e, datum)=>{
-    // console.log(datum);
-    setOnDrop(datum);
 
+  const openModal = (id)=>{
+    setUpdatedId(id)
     
+    document.getElementById("my_modal_1").showModal()
   }
 
-  
-  
+  const handleUpdateRequest = async (e) => {
+    e.preventDefault();
 
-  const onDragOver = (e) =>{
-    // console.log(e.target);
-    e.preventDefault()
-    
-  }
-
-  const handleOnDrop =async (e) =>{
-    const status = e.target.getAttribute('data-status')
-    console.log(e,status );
+    const modalTitle = e.target.title.value;
+    const modalDescription = e.target.description.value;
+    const updatedInfo = { modalTitle, modalDescription };
+    console.log(updatedInfo);
+    console.log(updatedId);
 
     try {
-      await axios.patch(`http://localhost:5000/transfer/${onDrop._id}`, {whereToDrop: status})
-      refetch()
-      toast.success(`on ${status}`)
+      await axios.patch(`http://localhost:5000/tasks/${updatedId}`, updatedInfo);
+      toast.success("Updated successfull");
+      refetch();
+      document.getElementById("my_modal_1").close();
+      e.target.title.value= ""
+      e.target.description.value= ""
+      setUpdatedId("")
     } catch (error) {
-      toast.error(error.message)
+      toast.error(error.message);
     }
-    
-  }
+  };
 
   return (
     <div className="min-h-screen p-6 bg-gray-100">
@@ -177,122 +235,80 @@ const TaskBoard = () => {
 
       <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* To-Do */}
-        <div className="bg-white p-4 rounded-lg shadow-md space-y-3" onDragOver={(e)=>onDragOver(e)} onDrop={(e)=>handleOnDrop(e)} data-status="To-Do">
+        <div
+          className="bg-white p-4 rounded-lg shadow-md space-y-3 pb-[100px]"
+          onDragOver={(e) => onDragOver(e)}
+          onDrop={(e) => handleOnDrop(e)}
+          data-status="To-Do"
+        >
           <h3 className="text-lg font-semibold mb-2">To-Do</h3>
-          {data.length > 0 &&
-            data.map(
+          {/* {data.length > 0 && */}
+          {tasks?.todoTask.length > 0 &&
+            // data.map(
+            tasks?.todoTask.map(
               (datum) =>
                 datum.category == "To-Do" && (
-                  <div
-                  draggable
-                  onDrag={(e)=>handleDrag(e, datum)}
-                    key={datum._id}
-                    className="bg-white p-4 rounded-lg shadow-md"
-                  >
-                    <h3 className="text-lg font-semibold mb-2 flex items-center justify-between">
-                      <span>{datum?.title}</span>
-                      <p className="flex items-center gap-2">
-                        <button
-                          onClick={() =>
-                            handleUpdate(
-                              datum._id,
-                              datum.title,
-                              datum.description,
-                              datum.category
-                            )
-                          }
-                        >
-                          <FaEdit />
-                        </button>
-                        <button onClick={() => handleDelte(datum._id)}>
-                          <MdDelete />
-                        </button>
-                      </p>
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      {datum?.description}
-                    </p>
-                  </div>
+                  <TaskColumn
+                    datum={datum}
+                    handleDelte={handleDelte}
+                    handleDrag={handleDrag}
+                    refetch={refetch}
+                    handleUpdateRequest={handleUpdateRequest}
+                    openModal={openModal}
+                    
+                  ></TaskColumn>
                 )
             )}
         </div>
         {/* In progress */}
-        <div className="bg-white p-4 rounded-lg shadow-md space-y-3" onDrop={(e)=>handleOnDrop(e)} onDragOver={(e)=>onDragOver(e)} data-status="In progress">
+        <div
+          className="bg-white p-4 rounded-lg shadow-md space-y-3 pb-[100px]"
+          onDrop={(e) => handleOnDrop(e)}
+          onDragOver={(e) => onDragOver(e)}
+          data-status="In Progress"
+        >
           <h3 className="text-lg font-semibold mb-2">In Progress</h3>
-          {data.length > 0 &&
-            data.map(
+          {/* {data.length > 0 &&  */}
+          {tasks?.inProgressTask.length > 0 &&
+            // data.map(
+            tasks?.inProgressTask.map(
               (datum) =>
                 datum.category == "In Progress" && (
-                  <div
-                  draggable
-                  onDrag={(e)=>handleDrag(e, datum)}
-                    key={datum._id}
-                    className="bg-white p-4 rounded-lg shadow-md"
-                  >
-                    <h3 className="text-lg font-semibold mb-2 flex items-center justify-between">
-                      <span >{datum?.title}</span>
-                      <p className="flex items-center gap-2">
-                        <button
-                          onClick={() =>
-                            handleUpdate(
-                              datum._id,
-                              datum.title,
-                              datum.description,
-                              datum.category
-                            )
-                          }
-                        >
-                          <FaEdit />
-                        </button>
-                        <button onClick={() => handleDelte(datum._id)}>
-                          <MdDelete />
-                        </button>
-                      </p>
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      {datum?.description}
-                    </p>
-                  </div>
+                  <TaskColumn
+                    datum={datum}
+                    handleDelte={handleDelte}
+                    handleDrag={handleDrag}
+                    refetch={refetch}
+                    handleUpdateRequest={handleUpdateRequest}
+                    openModal={openModal}
+                    
+                  ></TaskColumn>
                 )
             )}
         </div>
         {/* Done */}
-        <div className="bg-white p-4 rounded-lg shadow-md space-y-3" onDrop={(e)=>handleOnDrop(e)} onDragOver={(e)=>onDragOver(e)} data-status="Done">
+        <div
+          className="bg-white p-4 rounded-lg shadow-md space-y-3 pb-[100px]"
+          onDrop={(e) => handleOnDrop(e)}
+          onDragOver={(e) => onDragOver(e)}
+          data-status="Done"
+        >
           <h3 className="text-lg font-semibold mb-2">Done</h3>
-          {data.length > 0 &&
-            data.map(
+          {/* {data.length > 0 && */}
+          {tasks?.doneTask.length > 0 &&
+            // data.map(
+            tasks?.doneTask.map(
               (datum) =>
                 datum.category == "Done" && (
-                  <div
-                  draggable
-                  onDrag={(e)=>handleDrag(e, datum)}
-                    key={datum._id}
-                    className="bg-white p-4 rounded-lg shadow-md"
-                  >
-                    <h3 className="text-lg font-semibold mb-2 flex items-center justify-between">
-                      <span>{datum?.title}</span>
-                      <p className="flex items-center gap-2">
-                        <button
-                          onClick={() =>
-                            handleUpdate(
-                              datum._id,
-                              datum.title,
-                              datum.description,
-                              datum.category
-                            )
-                          }
-                        >
-                          <FaEdit />
-                        </button>
-                        <button onClick={() => handleDelte(datum._id)}>
-                          <MdDelete />
-                        </button>
-                      </p>
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      {datum?.description}
-                    </p>
-                  </div>
+                  <TaskColumn
+                    datum={datum}
+                    handleDelte={handleDelte}
+                    handleDrag={handleDrag}
+                    refetch={refetch}
+                    handleUpdateRequest={handleUpdateRequest}
+                    openModal={openModal}
+                    
+                  ></TaskColumn>
                 )
             )}
         </div>
@@ -300,7 +316,7 @@ const TaskBoard = () => {
       {/* modal */}
       {/* Open the modal using document.getElementById('ID').showModal() method */}
       {/* <button className="btn" onClick={()=>document.getElementById('my_modal_1').showModal()}>open modal</button> */}
-      <dialog id="my_modal_1" className="modal">
+      {/* <dialog id="my_modal_1" className="modal">
         <div className="modal-box">
           <div className="flex justify-between">
             <h2 className="text-xl font-semibold mb-4">Update Task</h2>
@@ -326,14 +342,14 @@ const TaskBoard = () => {
 
           <div className="modal-action">
             <form method="dialog">
-              {/* if there is a button in form, it will close the modal */}
+            
               <button className="btn">Close</button>
             </form>
           </div>
         </div>
-      </dialog>
+      </dialog> */}
     </div>
   );
 };
 
-export default TaskBoard;
+export default TodoAppp;
