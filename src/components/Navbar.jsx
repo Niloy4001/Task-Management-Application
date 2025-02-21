@@ -21,7 +21,7 @@ export default function Navbar() {
           placeholder="Search"
           className="input input-bordered w-24 md:w-auto"
         /> */}
-        <h1 className="flex justify-center items-center">{user?.displayName}</h1>
+        <h1 className="flex justify-center items-center text-2xl font-bold mr-2">{user?.displayName}</h1>
         <div className="dropdown dropdown-end">
           <div
             tabIndex={0}
