@@ -236,11 +236,13 @@ const TodoAppp = () => {
         theme === "light" ? "bg-[#F4F6F9]" : "bg-gray-800"
       } `}
     >
-      <div className={`max-w-lg  mx-auto ${
-            theme === "light"
-              ? "bg-white text-gray-800"
-              : "bg-gray-900 text-white "
-          } p-8 rounded-lg shadow-lg transition-transform hover:scale-105 hover:shadow-xl`}>
+      <div
+        className={`max-w-lg  mx-auto ${
+          theme === "light"
+            ? "bg-white text-gray-800"
+            : "bg-gray-900 text-white "
+        } p-8 rounded-lg shadow-lg transition-transform hover:scale-105 hover:shadow-xl`}
+      >
         <h2 className="text-2xl font-semibold mb-6 ">Add Task</h2>
 
         <input
