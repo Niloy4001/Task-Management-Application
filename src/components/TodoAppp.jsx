@@ -8,8 +8,10 @@ import { AuthContext } from "../AuthProvider/AuthProvider";
 import Swal from "sweetalert2";
 import Spinner from "./Spinner";
 import TaskColumn from "./TaskColumn";
+import { MdClose } from "react-icons/md";
 
 const TodoAppp = () => {
+  // const { }
   const [updatedId, setUpdatedId] = useState("");
   // const [modalTitle, setModalTitle] = useState("");
   const [title, setTitle] = useState("");
@@ -20,7 +22,7 @@ const TodoAppp = () => {
   const [onDrop, setOnDrop] = useState(null);
   const [draggedData, setDraggedData] = useState();
 
-  const { user } = useContext(AuthContext);
+  const { user, theme, setTheme } = useContext(AuthContext);
 
   const {
     data: tasks,
@@ -29,7 +31,9 @@ const TodoAppp = () => {
   } = useQuery({
     queryKey: ["tasks"],
     queryFn: async () => {
-      const { data } = await axios.get(`https://task-management-application-tawny.vercel.app/tasks`);
+      const { data } = await axios.get(
+        `https://task-management-application-tawny.vercel.app/tasks`
+      );
       return data;
     },
     select: (data) => ({
@@ -50,7 +54,9 @@ const TodoAppp = () => {
 
   const handleSubmit = async () => {
     if (title.trim() === "" || title.length > 50 || description.length > 200) {
-      alert("Please provide a valid title and description.");
+      toast.error(
+        "Give a valid title and description,  Title must be less than 50 words and Descripttion must be 200 words"
+      );
       return;
     }
 
@@ -63,7 +69,10 @@ const TodoAppp = () => {
     };
 
     try {
-      await axios.post("https://task-management-application-tawny.vercel.app/tasks", newTask);
+      await axios.post(
+        "https://task-management-application-tawny.vercel.app/tasks",
+        newTask
+      );
       toast.success("Post success");
       setTitle("");
       setDescription("");
@@ -90,7 +99,9 @@ const TodoAppp = () => {
         //  console.log(id);
 
         try {
-          await axios.delete(`https://task-management-application-tawny.vercel.app/tasks/${id}`);
+          await axios.delete(
+            `https://task-management-application-tawny.vercel.app/tasks/${id}`
+          );
           Swal.fire({
             title: "Deleted!",
             text: "Your data has been deleted.",
@@ -113,8 +124,6 @@ const TodoAppp = () => {
   //   // console.log(e.target);
   //   e.preventDefault();
   // };
-
- 
 
   const openModal = (id) => {
     setUpdatedId(id);
@@ -154,8 +163,7 @@ const TodoAppp = () => {
   const handleDrop = async (ev, datum) => {
     console.log(ev);
     console.log(datum);
-    
-    
+
     // if dragged and dropped element from same category then will chang just order number
     if (draggedData.category == datum.category) {
       console.log("same category");
@@ -166,18 +174,21 @@ const TodoAppp = () => {
         droppedOrder: datum.order,
       });
       try {
-        await axios.patch(`https://task-management-application-tawny.vercel.app/reorder`, {
-          draggedId: draggedData._id,
-          draggedOrder: draggedData.order,
-          droppedId: datum._id,
-          droppedOrder: datum.order,
-        });
+        await axios.patch(
+          `https://task-management-application-tawny.vercel.app/reorder`,
+          {
+            draggedId: draggedData._id,
+            draggedOrder: draggedData.order,
+            droppedId: datum._id,
+            droppedOrder: datum.order,
+          }
+        );
         refetch();
         toast.success("Re-order success");
       } catch (error) {
         toast.error(error.message);
       }
-    } 
+    }
     // else if (draggedData.category != datum.category) {
     //   console.log("different");
     //   const status = ev.target.getAttribute("data-status");
@@ -197,18 +208,21 @@ const TodoAppp = () => {
     // }
   };
 
-   const handleOnDrop = async (e) => {
+  const handleOnDrop = async (e) => {
     const status = e.currentTarget.getAttribute("data-status");
-    console.log(status ,draggedData._id);
+    console.log(status, draggedData._id);
 
     if (status == draggedData.category) {
-      return
+      return;
     }
 
     try {
-      await axios.patch(`https://task-management-application-tawny.vercel.app/transfer/${draggedData._id}`, {
-        whereToDrop: status,
-      });
+      await axios.patch(
+        `https://task-management-application-tawny.vercel.app/transfer/${draggedData._id}`,
+        {
+          whereToDrop: status,
+        }
+      );
       refetch();
       toast.success(`on ${status}`);
     } catch (error) {
@@ -217,34 +231,51 @@ const TodoAppp = () => {
   };
 
   return (
-    <div className="min-h-screen p-6 bg-gray-100">
-      <div className="max-w-lg mx-auto bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-xl font-semibold mb-4">Add Task</h2>
+    <div
+      className={`min-h-screen p-6 ${
+        theme === "light" ? "bg-[#F4F6F9]" : "bg-gray-800"
+      } `}
+    >
+      <div className={`max-w-lg  mx-auto ${
+            theme === "light"
+              ? "bg-white text-gray-800"
+              : "bg-gray-900 text-white "
+          } p-8 rounded-lg shadow-lg transition-transform hover:scale-105 hover:shadow-xl`}>
+        <h2 className="text-2xl font-semibold mb-6 ">Add Task</h2>
+
         <input
           type="text"
           placeholder="Title (required)"
           maxLength="50"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full p-2 border rounded mb-2"
+          className="w-full p-4 border-2 border-gray-300 rounded-lg mb-4  focus:outline-none focus:ring-2 focus:ring-royal-blue transition duration-300"
         />
+
         <textarea
           placeholder="Description (optional)"
           maxLength="200"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="w-full p-2 border rounded mb-2"
+          className="w-full p-4 border-2 border-gray-300 rounded-lg mb-4  focus:outline-none focus:ring-2 focus:ring-royal-blue transition duration-300"
         ></textarea>
+
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="w-full p-2 border rounded mb-2"
+          className="w-full p-4 border-2 border-gray-300 rounded-lg mb-4  focus:outline-none focus:ring-2 focus:ring-royal-blue transition duration-300"
         >
           <option value="To-Do">To-Do</option>
+          {/* Add other categories here if necessary */}
         </select>
+
         <button
           onClick={handleSubmit}
-          className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+          className={`w-full ${
+            theme === "light"
+              ? " bg-gray-900 text-white"
+              : " bg-white text-gray-800"
+          } py-2 px-4 rounded-lg hover:bg-lime-green transition duration-300 shadow-md hover:shadow-lg`}
         >
           Add Task
         </button>
@@ -253,12 +284,16 @@ const TodoAppp = () => {
       <div className="mt-6  space-x-6 space-y-6 1 flex flex-col lg:flex-row justify-center items-start">
         {/* To-Do */}
         <div
-          className="bg-white p-4 rounded-lg shadow-md space-y-3  w-full lg:w-[30%]  "
+          className={`${
+            theme === "light"
+              ? "bg-white text-gray-800"
+              : "bg-gray-900 text-white "
+          } p-4 rounded-lg shadow-md space-y-3  w-full lg:w-[30%]`}
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => handleOnDrop(e)}
           data-status="To-Do"
         >
-          <h3 className="text-lg font-semibold mb-2">To-Do</h3>
+          <h3 className="text-2xl font-semibold mb-2">To-Do</h3>
           {/* {data.length > 0 && */}
           {tasks?.todoTask.length > 0 &&
             // data.map(
@@ -282,12 +317,16 @@ const TodoAppp = () => {
         </div>
         {/* In progress */}
         <div
-          className="bg-white p-4 rounded-lg shadow-md space-y-3 w-full lg:w-[30%]"
+          className={`${
+            theme === "light"
+              ? "bg-white text-gray-800"
+              : "bg-gray-900 text-white "
+          } p-4 rounded-lg shadow-md space-y-3  w-full lg:w-[30%]`}
           onDrop={(e) => handleOnDrop(e)}
           onDragOver={(e) => e.preventDefault()}
           data-status="In Progress"
         >
-          <h3 className="text-lg font-semibold mb-2">In Progress</h3>
+          <h3 className="text-2xl font-semibold mb-2">In Progress</h3>
           {/* {data.length > 0 &&  */}
           {tasks?.inProgressTask.length > 0 &&
             // data.map(
@@ -311,12 +350,16 @@ const TodoAppp = () => {
         </div>
         {/* Done */}
         <div
-          className="bg-white p-4 rounded-lg shadow-md space-y-3 w-full lg:w-[30%] "
+          className={`${
+            theme === "light"
+              ? "bg-white text-gray-800"
+              : "bg-gray-900 text-white "
+          } p-4 rounded-lg shadow-md space-y-3  w-full lg:w-[30%]`}
           onDrop={(e) => handleOnDrop(e)}
           onDragOver={(e) => e.preventDefault()}
           data-status="Done"
         >
-          <h3 className="text-lg font-semibold mb-2">Done</h3>
+          <h3 className="text-2xl font-semibold mb-2">Done</h3>
           {/* {data.length > 0 && */}
           {tasks?.doneTask.length > 0 &&
             // data.map(
@@ -340,7 +383,7 @@ const TodoAppp = () => {
         </div>
       </div>
       <dialog id="my_modal_1" className="modal">
-        <div className="modal-box">
+        <div className="modal-box relative">
           <div className="flex justify-between">
             <h2 className="text-xl font-semibold mb-4">Update Task</h2>
           </div>
@@ -358,12 +401,14 @@ const TodoAppp = () => {
               name="description"
               className="w-full p-2 border rounded mb-2"
             ></textarea>
-            <button className="btn">Update</button>
+            <button className="btn bg-gray-900 text-white">Update</button>
           </form>
 
-          <div className="modal-action">
+          <div className="modal-action absolute top-0 right-2">
             <form method="dialog">
-              <button className="btn">Close</button>
+              <button className=" text-gray-900 text-2xl">
+                <MdClose />
+              </button>
             </form>
           </div>
         </div>

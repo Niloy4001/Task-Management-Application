@@ -17,6 +17,9 @@ import auth from "../Authentication/firebase.config";
   const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+     const [theme, setTheme] = useState(
+          localStorage.getItem("theme") ? localStorage.getItem("theme") : "light"
+        );
   
     // login or register by google
     const logInByGoogle = () => {
@@ -69,6 +72,8 @@ import auth from "../Authentication/firebase.config";
       logOut,
       logInByEmailPassword,
       manageProfile,
+      theme,
+      setTheme
     };
   
     return <AuthContext.Provider value={info}>{children}</AuthContext.Provider>;
