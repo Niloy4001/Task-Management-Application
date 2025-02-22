@@ -2,9 +2,12 @@
 
 # Task Management Application
 
+###  ( client side repository)
+
 A modern **Task Management Application** that allows users to add, edit, delete, and reorder tasks using a drag-and-drop interface. The tasks are categorized into three sections: **To-Do, In Progress, and Done**. All changes are instantly saved to a database for persistence.
 
 ## 🚀 Features
+
 
 - ✅ **Add, Edit, Delete Tasks**
 - 🔄 **Drag-and-Drop Reordering**
